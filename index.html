@@ -769,15 +769,63 @@ footer{
   font-weight:600;
   margin-bottom:4px;
 }
-.cframe[data-tone="warm"] .cf-bg{background:radial-gradient(ellipse at 60% 70%,rgba(217,138,61,.5),transparent 55%),linear-gradient(160deg,#211a12,#0e0d0b);}
-.cframe[data-tone="warm-detail"] .cf-bg{background:radial-gradient(circle at 45% 55%,rgba(217,138,61,.65),transparent 60%),linear-gradient(160deg,#181410,#0a0908);}
-.cframe[data-tone="tension"] .cf-bg{background:radial-gradient(ellipse at 50% 40%,rgba(217,138,61,.28),transparent 55%),linear-gradient(180deg,#161513,#0a0a0a);}
-.cframe[data-tone="threshold"] .cf-bg{background:linear-gradient(115deg,rgba(217,138,61,.35) 0%,transparent 35%),radial-gradient(ellipse at 75% 50%,rgba(230,231,233,.22),transparent 60%),linear-gradient(160deg,#141416,#0c0c0d);}
-.cframe[data-tone="cool"] .cf-bg{background:radial-gradient(ellipse at 50% 80%,rgba(230,231,233,.18),transparent 60%),linear-gradient(165deg,#1c1d20,#0e0e10);}
-.cframe[data-tone="metal"] .cf-bg{background:radial-gradient(ellipse at 50% 50%,rgba(230,231,233,.28),transparent 60%),linear-gradient(140deg,#222327,#0c0c0d 70%);}
+.cframe[data-tone="warm"] .cf-bg:not(.cf-photo){background:radial-gradient(ellipse at 60% 70%,rgba(217,138,61,.5),transparent 55%),linear-gradient(160deg,#211a12,#0e0d0b);}
+.cframe[data-tone="warm-detail"] .cf-bg:not(.cf-photo){background:radial-gradient(circle at 45% 55%,rgba(217,138,61,.65),transparent 60%),linear-gradient(160deg,#181410,#0a0908);}
+.cframe[data-tone="tension"] .cf-bg:not(.cf-photo){background:radial-gradient(ellipse at 50% 40%,rgba(217,138,61,.28),transparent 55%),linear-gradient(180deg,#161513,#0a0a0a);}
+.cframe[data-tone="threshold"] .cf-bg:not(.cf-photo){background:linear-gradient(115deg,rgba(217,138,61,.35) 0%,transparent 35%),radial-gradient(ellipse at 75% 50%,rgba(230,231,233,.22),transparent 60%),linear-gradient(160deg,#141416,#0c0c0d);}
+.cframe[data-tone="cool"] .cf-bg:not(.cf-photo){background:radial-gradient(ellipse at 50% 80%,rgba(230,231,233,.18),transparent 60%),linear-gradient(165deg,#1c1d20,#0e0e10);}
+.cframe[data-tone="metal"] .cf-bg:not(.cf-photo){background:radial-gradient(ellipse at 50% 50%,rgba(230,231,233,.28),transparent 60%),linear-gradient(140deg,#222327,#0c0c0d 70%);}
+
+/* ============ custom cursor (camera reticle) ============ */
+@media (pointer: fine){
+  html{cursor:none;}
+  a,button,.tilt,.nav-toggle{cursor:none;}
+  #cursorDot{
+    position:fixed;
+    top:0;left:0;
+    width:6px;height:6px;
+    border-radius:50%;
+    background:var(--ember);
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:opacity .2s;
+  }
+  #cursorRing{
+    position:fixed;
+    top:0;left:0;
+    width:38px;height:38px;
+    pointer-events:none;
+    z-index:9998;
+    transform:translate(-50%,-50%);
+    transition:width .25s var(--ease),height .25s var(--ease),opacity .2s;
+  }
+  #cursorRing span{
+    position:absolute;
+    width:9px;height:9px;
+    border:1px solid var(--ember);
+    opacity:.85;
+  }
+  #cursorRing span:nth-child(1){top:0;left:0;border-inline-end:none;border-bottom:none;}
+  #cursorRing span:nth-child(2){top:0;right:0;border-inline-start:none;border-bottom:none;}
+  #cursorRing span:nth-child(3){bottom:0;left:0;border-inline-end:none;border-top:none;}
+  #cursorRing span:nth-child(4){bottom:0;right:0;border-inline-start:none;border-top:none;}
+  #cursorRing.hover{width:64px;height:64px;}
+  #cursorRing.hover span{border-color:var(--white);}
+  body.cursor-hidden #cursorDot,
+  body.cursor-hidden #cursorRing{opacity:0;}
+}
+@media (pointer: coarse){
+  #cursorDot,#cursorRing{display:none;}
+}
 </style>
 </head>
 <body>
+
+<div id="cursorDot"></div>
+<div id="cursorRing">
+  <span></span><span></span><span></span><span></span>
+</div>
 
 <nav id="nav">
   <div class="nav-logo">BAIC <span>×</span> STUDIO</div>
@@ -1086,11 +1134,6 @@ const scenes = [
     shot:'Medium Close-Up', camera:'Slow Push-In', lens:'50–85mm',
   },
   {
-    tag:'SC.03', tone:'warm-detail', shotHud:'MACRO · 100MM',
-    title:'التفاصيل', desc:'لقطات Macro للكتاب والفانوس ومعدات التخييم.',
-    shot:'Macro / Extreme Close-Up', camera:'Static + Rack Focus', lens:'Macro 100mm',
-  },
-  {
     tag:'SC.04', tone:'tension', shotHud:'CU · 85MM', photo:IMG.s04,
     title:'الصوت', desc:'صوت غامض يقطع الهدوء، يتوقف ويصغي.',
     shot:'Close-Up', camera:'Slow Dolly-In', lens:'85mm',
@@ -1287,6 +1330,36 @@ if(!reduceMotion){
       el.style.transform = `perspective(900px) rotateY(${px*9}deg) rotateX(${-py*9}deg) scale(1.015)`;
     });
     el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+  });
+}
+
+/* ============ custom cursor (camera reticle) ============ */
+if(window.matchMedia('(pointer: fine)').matches){
+  const cDot = document.getElementById('cursorDot');
+  const cRing = document.getElementById('cursorRing');
+  let mx = window.innerWidth/2, my = window.innerHeight/2;
+  let rx = mx, ry = my;
+
+  document.addEventListener('mousemove', (e) => {
+    mx = e.clientX; my = e.clientY;
+    cDot.style.left = mx + 'px';
+    cDot.style.top = my + 'px';
+    document.body.classList.remove('cursor-hidden');
+  });
+  document.addEventListener('mouseleave', () => document.body.classList.add('cursor-hidden'));
+
+  function ringLoop(){
+    rx += (mx - rx) * 0.16;
+    ry += (my - ry) * 0.16;
+    cRing.style.left = rx + 'px';
+    cRing.style.top = ry + 'px';
+    requestAnimationFrame(ringLoop);
+  }
+  requestAnimationFrame(ringLoop);
+
+  document.querySelectorAll('a, button, .tilt, .nav-toggle').forEach(el => {
+    el.addEventListener('mouseenter', () => cRing.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cRing.classList.remove('hover'));
   });
 }
 </script>
